@@ -1,0 +1,140 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+
+\title{Fast EECs}
+\author{Simon Rothman}
+\date{April 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{EECs as matrix products}
+
+The $N$-point projected EEC is the following sum:
+\begin{equation}
+    \sigma^{[N]}(R_L) = \sum_{i_1, i_2, \ldots i_N} \left[ \xi_{i_1}\cdot \xi_{i_2}\cdot \ldots \xi_{i_N} \right] \delta( R_L(\hat{p}_{i_1}, \hat{p}_{i_2}, \ldots \hat{p}_{i_N}) - R),
+    \label{eqn:generalEEC}
+\end{equation}
+where the quantities $\xi_i$ are your energy coordinates (eg $\xi_i = p_T^{(i)}/p_T^{\text{jet}}$ or $\xi_i = E^{(i)}/Q$) and the function $R(\ldots)$ computes the angular separation coordinate from the unit vectors $\hat{p}_i$ aligned with the particle momenta. As we are considering the projected EECs, the function $R_L$ computes all of the two-way angular separations, and picks out the largest one. 
+
+We will see that this sum is naturally expressed as an efficient tensor product. Ignoring for a moment the delta function, we can see that the total EEC is already expressed as a product over the vector $\xi$ (which has length $N_{part}$). The interesting part is implementing the $R_L$ function and delta function as a tensor product. 
+
+\subsection{The two-point EEC}
+
+Consider the two-point EEC
+\begin{align}
+    \sigma^{[2]}(R) &= \sum_{i, j} \left[ \xi_{i}\cdot \xi_{j}\right] \delta( R(\hat{p}_{i}, \hat{p}_{j}) - R).
+\end{align}
+
+The first term is already the outer product $\xi_{i}\cdot \xi_{j}$. In order to implement the delta function, we write two new quantities: a vector $\rho$ with length $N_R \leq {N_{part} \choose 2}$ of all of the unique pairwise separations between two particles. The order of this vector does not matter. We then introduce a $(N_{R} \times N_{part} \times N_{part})$ tensor $\Phi$ which is defined as 
+\begin{equation}
+    \Phi^{a ij} = \delta\left[R_{ij} - \rho^a\right]
+\end{equation}
+
+This allows us to immediately write the two-point EEC in Einstein notation as:
+\begin{equation}
+    \sigma^{[2]}(\rho^a) = \xi^i \xi^j \Phi^{a ij}
+\end{equation}
+
+\subsection{The three-point EEC}
+
+Consider the three-point EEC
+\begin{align}
+    \sigma^{[3]}(R_L) &= \sum_{i, j, k} \left[ \xi_{i}\cdot \xi_{j}\cdot \xi_{k}\right] \delta( R_L(\hat{p}_{i}, \hat{p}_{j}, \hat{p}_{k})  - R_L).
+\end{align}
+with 
+\begin{equation}
+    R_L(\hat{p}_{i}, \hat{p}_{j}, \hat{p}_{k}) = \max\left\{ R(\hat{p}_{i}, \hat{p}_{j}), R(\hat{p}_{i}, \hat{p}_{k}), R(\hat{p}_{j}, \hat{p}_{k})\right\}
+\end{equation}
+
+We can think about the implementation of $R_L$ as a two step procedure. First, we implement $R_{ij}$ as in the two-point case, with the tensor $\Phi$. Then, we implement the comparison with $R_{ik}$ and $R_{jk}$ via a new tensor:
+\begin{equation}
+    \Omega^{a b ij} = \begin{cases} 
+        \delta_{ab} & R_{ij} \leq \rho_b \\
+        \Phi^{a ij} & R_{ij} > \rho_b
+    \end{cases}
+\end{equation}
+The $R_L$ function then reduces to the operation:
+\begin{equation}
+    R_L(\hat{p}_{i}, \hat{p}_{j}, \hat{p}_{k})  = \Phi^{a i j} \Omega^{b a ik} \Omega^{c b jk} \rho^c
+\end{equation}
+We can validate that this works by plugging in the definitions of the $\Phi$ and $\Omega$ tensors:
+\begin{align}
+    R_L(\hat{p}_{i}, \hat{p}_{j}, \hat{p}_{k})  &= \Phi^{a i j} \Omega^{b a ik} \Omega^{c b jk} \rho^c \\
+    &= \begin{cases}
+        \Phi^{a i j} \Omega^{b a ik} \delta_{cb} \rho^c & R_{jk} \leq \rho_b \\
+        \Phi^{a i j} \Omega^{b a ik} \Phi^{c jk} \rho^c & R_{jk} > \rho_b
+    \end{cases} \\
+    &= \begin{cases}
+        \Phi^{a i j} \delta_{ab} \delta_{cb} \rho^c & R_{jk} \leq \rho_b \text{ AND } R_{ik} \leq \rho_a\\
+        \Phi^{a i j} \Phi^{b ik} \delta_{cb} \rho^c & R_{jk} \leq \rho_b  \text{ AND } R_{ik} > \rho_a \\
+        \Phi^{a i j} \delta_{ab} \Phi^{c jk} \rho^c & R_{jk} > \rho_b \text{ AND } R_{ik} \leq \rho_a\\
+        \Phi^{a i j}  \Phi^{b ik}  \Phi^{c jk} \rho^c & R_{jk} > \rho_b  \text{ AND } R_{ik} > \rho_a
+    \end{cases} \\
+    &= \begin{cases}
+         \delta\left[R_{ij} - \rho^a\right] \rho^a & R_{jk} \leq \rho_a \text{ AND } R_{ik} \leq \rho_a\\
+         \delta\left[R_{ij} - \rho^a\right] \delta\left[R_{ik} - \rho^b\right] \rho^b & R_{jk} \leq \rho_b  \text{ AND } R_{ik} > \rho_a \\
+         \delta\left[R_{ij} - \rho^a\right] \delta\left[R_{jk} - \rho^c\right] \rho^c & R_{jk} > \rho_a \text{ AND } R_{ik} \leq \rho_a\\
+         \delta\left[R_{ij} - \rho^a\right]  \delta\left[R_{ik} - \rho^b\right] \delta\left[R_{jk} - \rho^c\right] \rho^c & R_{jk} > \rho_b  \text{ AND } R_{ik} > \rho_a
+    \end{cases} \\
+    &= \begin{cases}
+        R_{ij} & R_{jk} \leq R_{ij} \text{ AND } R_{ik} \leq R_{ij} \\
+        R_{ik} & R_{jk} \leq R_{ik}  \text{ AND } R_{ik} > R_{ij}  \\
+        R_{jk} & R_{jk} > R_{ij} \text{ AND } R_{ik} \leq R_{ij} \\
+        R_{jk} & R_{jk} > R_{ik}  \text{ AND } R_{ik} > R_{ij} 
+    \end{cases} \\
+    &= \begin{cases}
+        R_{ij} & R_{ij} \geq R_{ik}, R_{jk} \\
+        R_{ik} & R_{ik} \geq R_{ij}, R_{jk}  \\
+        R_{jk} & R_{jk} \geq R_{ij} \geq R_{ik} \\
+        R_{jk} & R_{jk} \geq R_{ik} \geq R_{ij} 
+    \end{cases} \\
+    &= \max\left\{ R(\hat{p}_{i}, \hat{p}_{j}), R(\hat{p}_{i}, \hat{p}_{k}), R(\hat{p}_{j}, \hat{p}_{k})\right\}
+\end{align}
+as desired.
+
+The three-point EEC therefore becomes
+\begin{equation}
+    \sigma^{[3]}(\rho^a) = \xi^i \xi^j \xi^k \Phi^{a i j} \Omega^{b a ik} \Omega^{c b jk} 
+\end{equation}
+
+\subsection{The $N$-point EEC}
+
+The general $N$-point EEC is now easy to compute with these ingredients. To go from the $N$-point EEC to the $(N+1)$-point EEC, one simply needs to insert $N$ additional $\Omega$ tensors which implement the comparison between the largest $R_L$ so far, and the $N$ pairwise distances between the new degree of freedom that is being introduced. For example, the four-point EEC is:
+\begin{equation}
+    \sigma^{[4]}(\rho^a) = \xi^i \xi^j \xi^k \xi^l \Phi^{a i j} \Omega^{b a ik} \Omega^{c b jk} \Omega^{d c il} \Omega^{e d jl} \Omega^{f e kl} 
+\end{equation}
+
+\subsection{Performance}
+
+\subsubsection{Complexity analysis}
+
+The space complexity of this algorithm is dominated by the large $\Omega$ tensor, which has shape $(N_{R} \times N_R \times N_{part} \times N_{part})$.
+
+The time complexity of this algorithm is dominated by the contraction of all the $\Omega$ tensors. For an $N$-point EEC calculation, there are $O(N^2)$ of these tensors (for the $O(N^2)$ pairwise distances). We therefore see that the computation time scales quadratically with the EEC order $N$. A naive EEC implementation would have its runtime dominated by the $N$-dimensional loop, and would therefore scale like $O(N_{part}^N)$, which is much worse :). 
+
+\subsubsection{Binning in $R_L$}
+
+The definition of the $\Phi$ tensor need not rely on exact equivalency. Instead, one could define some finite-width bins in $R$, and define the $\Phi$ tensor so as to merge nearby entires. E.g. one could define
+\begin{equation}
+    \Phi^{aij} = \begin{cases}
+        1 & R^{\text{bin edge}}_a < R_{ij} < R^{\text{bin edge}}_{a+1} \\
+        0 & \text{otherwise}
+    \end{cases}
+\end{equation}
+
+All of the remaining computations remain identical, with the benefit that $N_R$ is reduced, and thus all of the calculations become more efficient.
+
+\subsubsection{Other benefits}
+
+There are some other advantages to this approach, including
+\begin{enumerate}
+    \item One can take advantage of highly-optimized tensor contraction routines which have already been implemented in such a way as to optimize for cache locality, parallel execution, etc
+    \item The computation is completely branchless
+    \item The calculation of the $N+1$-point EEC is built in a trivial manner from the calculation of the $N$-point EEC, so all the relevant work can be reused
+    \item One does not have to rely on explicit implementation of N-dimensional loops, which I have found require either (a) hand-writing nested loops for each potential value of $N$, or (b) relying on general $N$-dimensional looping logic, which ends up accounting for a nontrivial fraction of the total runtime of the program. (Is there a better way to do this??? Let me know!)
+\end{enumerate}
+    
+\end{document}
