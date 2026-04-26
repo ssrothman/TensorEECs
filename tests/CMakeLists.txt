@@ -1,0 +1,15 @@
+add_executable(tensoreecs_test_eec2 test_eec2.cpp)
+target_link_libraries(tensoreecs_test_eec2 PRIVATE tensoreecs)
+add_test(NAME tensoreecs_test_eec2 COMMAND tensoreecs_test_eec2)
+
+add_executable(tensoreecs_test_eec3 test_eec3.cpp)
+target_link_libraries(tensoreecs_test_eec3 PRIVATE tensoreecs)
+add_test(NAME tensoreecs_test_eec3 COMMAND tensoreecs_test_eec3)
+
+add_executable(tensoreecs_test_invariance test_invariance.cpp)
+target_link_libraries(tensoreecs_test_invariance PRIVATE tensoreecs)
+add_test(NAME tensoreecs_test_invariance COMMAND tensoreecs_test_invariance)
+
+add_executable(tensoreecs_test_edge_cases test_edge_cases.cpp)
+target_link_libraries(tensoreecs_test_edge_cases PRIVATE tensoreecs)
+add_test(NAME tensoreecs_test_edge_cases COMMAND tensoreecs_test_edge_cases)
