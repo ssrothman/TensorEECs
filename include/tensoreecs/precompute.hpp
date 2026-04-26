@@ -1,4 +1,5 @@
-#pragma once
+#ifndef TENSOREECS_PRECOMPUTE_HPP_
+#define TENSOREECS_PRECOMPUTE_HPP_
 
 #include "tensoreecs/internal/indexing.hpp"
 #include "tensoreecs/types.hpp"
@@ -273,3 +274,5 @@ PrecomputeResultT<T, StorageMode> build_precompute(
 }
 
 }  // namespace tensoreecs
+
+#endif  // TENSOREECS_PRECOMPUTE_HPP_

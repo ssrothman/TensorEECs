@@ -1,4 +1,5 @@
-#pragma once
+#ifndef TENSOREECS_EEC_HPP_
+#define TENSOREECS_EEC_HPP_
 
 #include "tensoreecs/precompute.hpp"
 
@@ -143,3 +144,5 @@ RuntimeVector compute_eec3_runtime(
     const Eigen::Ref<const Eigen::VectorXd>& bin_edges);
 
 }  // namespace tensoreecs
+
+#endif  // TENSOREECS_EEC_HPP_

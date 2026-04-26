@@ -1,4 +1,5 @@
-#pragma once
+#ifndef TENSOREECS_INTERNAL_INDEXING_HPP_
+#define TENSOREECS_INTERNAL_INDEXING_HPP_
 
 #include <cstddef>
 
@@ -31,3 +32,5 @@ constexpr std::size_t triangular_number(std::size_t n) {
 }
 
 }  // namespace tensoreecs::internal
+
+#endif  // TENSOREECS_INTERNAL_INDEXING_HPP_

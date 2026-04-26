@@ -1,4 +1,5 @@
-#pragma once
+#ifndef TENSOREECS_TYPES_HPP_
+#define TENSOREECS_TYPES_HPP_
 
 #include <Eigen/Dense>
 
@@ -59,7 +60,7 @@ using MatrixT = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
 template <typename T>
 struct BinningConfigT {
   PhiMode mode = PhiMode::ExactUniqueDistances;
-  VectorT<T> bin_edges;
+  VectorT<T> bin_edges; // Only used if mode == BinnedEdges; must be strictly increasing.
   T exact_epsilon = constants::Tolerances<T>::kExactEpsilon;
 };
 
@@ -141,3 +142,5 @@ template <typename T>
 constexpr bool is_supported_scalar_v = std::is_same_v<T, float> || std::is_same_v<T, double>;
 
 }  // namespace tensoreecs
+
+#endif  // TENSOREECS_TYPES_HPP_
