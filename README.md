@@ -78,6 +78,26 @@ The plotting script writes PNG files into `benchmarks/plots` for:
 - exact mode scaling (particle count) for precompute and compute-only timings
 - binned mode scaling (bin count) for precompute and compute-only timings
 
+## Avoid In-Source Builds
+
+This project enforces out-of-source CMake builds. Running CMake with the source and build directories set to the same path is intentionally blocked.
+
+Correct usage:
+
+```bash
+cmake -S . -B build
+cmake --build build -j
+```
+
+If an in-source configure/build happened previously, clean generated artifacts from the repository root:
+
+```bash
+git clean -ndX
+git clean -fdX
+```
+
+Then reconfigure using the out-of-source commands above.
+
 ## Configuration Defaults
 
 - `TensorStorageMode`: sparse

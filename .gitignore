@@ -51,6 +51,25 @@ cmake_install.cmake
 Makefile
 install_manifest.txt
 compile_commands.json
+CTestTestfile.cmake
+cmake_uninstall.cmake
+
+# CMake/Ninja multi-config outputs
+build.ninja
+.ninja_deps
+.ninja_log
+rules.ninja
+
+# CMake user/package presets (local machine specific)
+CMakeUserPresets.json
+
+# CTest generated state
+DartConfiguration.tcl
+Testing/Temporary/
+
+# Generated dependency metadata
+*.ninja
+*.cmake.user
 
 # Temporary files
 *.tmp
@@ -68,6 +87,15 @@ vcpkg_installed/
 Testing/
 .cache/
 
+# IDE/editor build folders
+.vscode/.cmake/
+.idea/
+
 # benchmarks
 benchmarks/plots/*
 benchmarks/*.csv
+
+# Safety net for accidental in-source target outputs
+libtensoreecs.so
+tests/tensoreecs_test_*
+benchmarks/tensoreecs_bench

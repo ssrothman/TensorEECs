@@ -2,6 +2,20 @@ cmake_minimum_required(VERSION 3.20)
 
 project(TensorEECs VERSION 0.1.0 LANGUAGES CXX)
 
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
+  message(FATAL_ERROR "In-source builds are disabled. Use: cmake -S . -B build")
+endif()
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+foreach(cfg Debug Release RelWithDebInfo MinSizeRel)
+  string(TOUPPER "${cfg}" cfg_upper)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${cfg_upper} "${CMAKE_BINARY_DIR}/bin")
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${cfg_upper} "${CMAKE_BINARY_DIR}/lib")
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${cfg_upper} "${CMAKE_BINARY_DIR}/lib")
+endforeach()
+
 option(BUILD_SHARED_LIB "Build shared C++ library" ON)
 option(BUILD_PYTHON_BINDINGS "Build pybind11 module" OFF)
 option(BUILD_TESTS "Build C++ tests" ON)
