@@ -1,0 +1,2 @@
+add_executable(tensoreecs_bench benchmark.cpp)
+target_link_libraries(tensoreecs_bench PRIVATE tensoreecs)
